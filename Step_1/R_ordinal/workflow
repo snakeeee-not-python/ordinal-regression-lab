@@ -6,7 +6,6 @@ partial proportional-odds effects when the simpler model is not adequate.
 
 For the logit link, the general workflow is:
 
-
 ```text
 clm()
   ↓
@@ -23,3 +22,299 @@ anova()
 summary() / convergence()
   ↓
 predict()
+
+in detail:
+
+1. `clm()`
+
+Fit a cumulative link model.
+
+Syntax
+```r
+clm(
+    formula,
+    scale,
+    nominal,
+    data,
+    weights,
+    start,
+    subset,
+    doFit = TRUE,
+    na.action,
+    contrasts,
+    model = TRUE,
+    control = list(),
+    link = c(
+        "logit",
+        "probit",
+        "cloglog",
+        "loglog",
+        "cauchit",
+        "Aranda-Ordaz",
+        "log-gamma"
+    ),
+    threshold = c(
+        "flexible",
+        "symmetric",
+        "symmetric2",
+        "equidistant"
+    ),
+    ...
+)
+```
+Arguments
+`formula`
+Input: Formula
+```r
+response ~ x1 + x2
+```
+Purpose:  
+Defines the ordinal response and the ordinary location predictors.
+PPO relevance:  
+Predictors in this part have common effects across thresholds unless they are modeled through another component.
+---
+`scale`
+Input: One-sided formula
+```r
+~ x
+```
+Purpose:  
+Models differences in the scale / dispersion of the latent distribution.
+PPO relevance:  
+Scale heterogeneity can be an alternative explanation for apparent non-proportionality.
+---
+`nominal`
+Input: One-sided formula
+```r
+~ x
+```
+Purpose:  
+Allows predictor effects to vary across thresholds.
+PPO relevance:  
+With the logit link, nominal effects provide the main PPO mechanism in `ordinal`.
+---
+`data`
+Input: Data frame
+Contains the variables used by the model.
+---
+`weights`
+Input: Numeric vector
+Controls the contribution of each observation to the likelihood.
+By default, each observation has weight 1.
+---
+`start`
+Input: Numeric vector
+Initial parameter values used by the optimizer.
+The parameter vector may contain:
+threshold parameters (`alpha`);
+location parameters (`beta`);
+scale parameters (`zeta`).
+Normally this argument does not need to be specified by ordinary users.
+---
+`subset`
+Input: Logical or indexing expression
+Selects which observations are used for model fitting.
+---
+`doFit`
+Input: Logical
+Default:
+```r
+TRUE
+```
+Controls whether the model is actually fitted after its internal structure is constructed.
+---
+`na.action`
+Purpose:  
+Controls how missing values are handled.
+---
+`contrasts`
+Purpose:  
+Controls how categorical predictors are encoded into the model matrix.
+This affects coefficient parameterization and can matter when comparing results across software.
+---
+`model`
+Input: Logical
+Default:
+```r
+TRUE
+```
+Controls whether the fitted model frame is stored in the model object.
+---
+`control`
+Input: Control list
+Controls numerical optimization and convergence behavior.
+---
+`link`
+Input: Character string
+Available links include:
+```text
+logit
+probit
+cloglog
+loglog
+cauchit
+Aranda-Ordaz
+log-gamma
+```
+Purpose:  
+Defines the transformation connecting cumulative probabilities to the linear predictor.
+PPO relevance:  
+The term Partial Proportional Odds applies specifically to the logit-link case.
+---
+`threshold`
+Input: Character string
+Available threshold structures include:
+```text
+flexible
+symmetric
+symmetric2
+equidistant
+```
+Purpose:  
+Controls structural constraints on category thresholds / cut-points.
+---
+2. `summary()`
+Purpose
+Display the main results of a fitted `clm` model.
+Input
+A fitted `clm` object.
+```r
+summary(model)
+```
+Main Output
+coefficient estimates;
+standard errors;
+z statistics;
+p-values;
+threshold estimates;
+log-likelihood;
+AIC;
+iteration information;
+maximum gradient;
+Hessian condition information.
+---
+3. `nominal_test()`
+Purpose
+Assess whether predictors may require threshold-specific effects.
+Syntax
+```r
+nominal_test(
+    object,
+    scope,
+    trace = FALSE,
+    ...
+)
+```
+Arguments
+`object`
+A fitted `clm` model used as the baseline model.
+`scope`
+Specifies which predictors should be tested for nominal / threshold-specific effects.
+Main Output
+For each tested predictor:
+degrees of freedom;
+log-likelihood;
+AIC;
+likelihood-ratio statistic;
+p-value.
+PPO Relevance
+Provides predictor-level evidence about whether the proportional-odds constraint may be too restrictive.
+It does not automatically select the final PPO specification.
+---
+4. `scale_test()`
+Purpose
+Assess whether adding scale effects improves the fitted cumulative link model.
+Input
+A fitted `clm` object.
+```r
+scale_test(model)
+```
+Main Output
+For each tested predictor:
+degrees of freedom;
+log-likelihood;
+AIC;
+likelihood-ratio statistic;
+p-value.
+PPO Relevance
+Helps distinguish scale heterogeneity from genuine threshold-specific effects.
+---
+5. `anova()`
+Purpose
+Compare nested cumulative link models.
+Typical Usage
+```r
+anova(m_po, m_ppo)
+```
+Main Output
+number of parameters;
+AIC;
+log-likelihood;
+likelihood-ratio statistic;
+degrees of freedom;
+p-value.
+PPO Relevance
+Can be used to assess whether relaxing proportional-odds constraints produces a sufficient improvement in model fit.
+---
+6. `convergence()`
+Purpose
+Assess the numerical accuracy of fitted maximum-likelihood estimates.
+Input
+A fitted `clm` object.
+```r
+convergence(model)
+```
+Main Information
+parameter error;
+correct decimals;
+significant digits;
+log-likelihood error.
+Interpretation
+`summary()` shows what the model estimated.
+`convergence()` evaluates how numerically accurate those estimates are.
+---
+7. `predict()`
+Purpose
+Generate predictions from a fitted PO or PPO model.
+Typical Syntax
+```r
+predict(
+    object,
+    newdata,
+    se.fit = FALSE,
+    interval = FALSE,
+    level = 0.95,
+    type = "prob"
+)
+```
+Arguments
+`object`
+A fitted PO or PPO `clm` model.
+`newdata`
+New predictor values for which predictions are required.
+`se.fit`
+Requests standard errors for predictions.
+`interval`
+Requests confidence intervals.
+`level`
+Confidence level used for intervals.
+Default:
+```r
+0.95
+```
+`type`
+Main options:
+```text
+prob
+class
+cum.prob
+linear.predictor
+```
+Main Output
+Depending on `type`, the function can return:
+category probabilities;
+cumulative probabilities;
+predicted categories;
+linear predictor values.
+PPO Relevance
+Predicted probabilities are often easier to interpret than threshold-specific PPO coefficients.
