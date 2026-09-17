@@ -1,0 +1,25 @@
+## General User Workflow
+
+The `ordinal` package provides a cumulative link modeling workflow in which
+a user normally starts from a proportional-odds model and only introduces
+partial proportional-odds effects when the simpler model is not adequate.
+
+For the logit link, the general workflow is:
+
+
+```text
+clm()
+  ↓
+summary() / convergence()
+  ↓
+nominal_test() + scale_test()
+  ↓
+Researcher decision
+  ↓
+clm(..., nominal = ...)
+  ↓
+anova()
+  ↓
+summary() / convergence()
+  ↓
+predict()
